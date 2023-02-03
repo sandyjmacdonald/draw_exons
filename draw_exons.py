@@ -220,6 +220,23 @@ class CDS:
 
         return self.canv
 
+    def redraw(self):
+        """
+        A do-all function that creates the exon instances,
+        draws them, then draw the connecting lines. Returns
+        the modified canvas object.
+        """
+        this_canv = self.canv
+        w, h = this_canv._image.size
+        new_img = Image.new("RGB", (w, h), "white")
+        new_canv = ImageDraw.Draw(new_img, mode="RGBA")
+        self.canv = new_canv
+        self.make_exons()
+        self.draw_exons()
+        self.draw_lines()
+
+        return self.canv
+
 
 class CDS_group:
     """
@@ -384,18 +401,21 @@ def add_margin(img, top=0, right=0, bottom=0, left=0, colour=(255, 255, 255)):
 
 
 if __name__ == "__main__":
-    # Randomly pick a number of CDSs and total exons for the gene
-    num_cdss = random.randint(5, 12)
-    num_exons = random.randint(4, 10)
-    # Empty list to store the gene in
+    # Randomly pick a number of CDSs and total exons for the gene.
+    num_cdss = random.randint(7, 12)
+    num_exons = random.randint(7, 15)
+
+    # Empty list to store the gene in.
     gene = []
-    # Empty list to store exon coords for each CDS
+
+    # Empty list to store exon coords for each CDS.
     cds_coords = []
+
     # Keep track of the current position when laying
-    # out exons
+    # out exons.
     curr_pos = 0
 
-    # Colorbrewer palette of 12 qualitative colours
+    # Colorbrewer palette of 12 qualitative colours.
     pal = [
         (141, 211, 199),
         (255, 255, 179),
@@ -411,7 +431,7 @@ if __name__ == "__main__":
         (255, 237, 111),
     ]
 
-    # Build exons and add to gene list
+    # Build exons and add to gene list.
     for j in range(num_exons):
         exon_length = random.randint(100, 1000)
         gap = random.randint(100, 1000)
@@ -421,30 +441,31 @@ if __name__ == "__main__":
         gene.append((start, end))
 
     # For each CDS, randomly pick some exons and add
-    # to the cds_coords list
+    # to the cds_coords list.
     for i in range(num_cdss):
         chosen_exons = sorted(
             random.sample(gene, random.randint(2, num_exons)), key=lambda x: x[0]
         )
         cds_coords.append(chosen_exons)
 
-    # Randomly pick some colours from the palette
+    # Randomly pick some colours from the palette.
     fill_colours = random.sample(pal, len(cds_coords))
-    # Just use black for the outline colours
+
+    # Just use black for the outline colours.
     outline_colours = [(0, 0, 0) for i in range(len(cds_coords))]
 
     # Scale up size, and then resample down later to improve
-    # jaggy lines
-    scale_factor = 2
+    # jaggy lines.
+    scale_factor = 4
     cds_height = 20 * scale_factor
     width = 800 * scale_factor
 
-    # Create a CDS_group with the cds_coords and colours
+    # Create a CDS_group with the cds_coords and colours.
     CDS_group = CDS_group(
         cds_coords=cds_coords,
         cds_height=cds_height,
         cds_spacing=int(cds_height * 1.5),
-        linewidth=2,
+        linewidth=5,
         width=width,
         fill_colours=fill_colours,
         outline_colours=outline_colours,
@@ -453,11 +474,11 @@ if __name__ == "__main__":
     # Draw the CDSs
     img = CDS_group.draw()
 
-    # Resample and size down to improve jaggy lines
+    # Resample and size down to improve jaggy lines.
     w, h = img.size
-    img = img.resize(
-        (w // scale_factor, h // scale_factor), resample=Image.Resampling.LANCZOS
+    img_1x = img.resize(
+        (w // scale_factor, h // scale_factor), resample=Image.Resampling.BICUBIC
     )
 
-    # Display the CDSs
-    img.show()
+    # Show the CDSs.
+    img_1x.show()
